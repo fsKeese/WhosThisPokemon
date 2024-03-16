@@ -19,4 +19,15 @@ image = Image.open(io.BytesIO(image_io))
 st.write("""
          Is this Ditto?
          """)
-st.write(image)
+#st.button("Next Pokemon", key ="Next")
+
+if st.button("Next"):
+    pokemon = np.random.randint(0, 151)
+
+
+    pokemon_json = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon}").json()
+    pokemon_image_url = pokemon_json["sprites"]["other"]["official-artwork"]["front_default"]
+    image_io = requests.get(pokemon_image_url).content
+    image = Image.open(io.BytesIO(image_io))
+    st.image(image)
+    
