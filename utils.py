@@ -1,8 +1,12 @@
 import os
+import sys
+import random
+from pathlib import Path
 import requests
 import io
 from io import BytesIO
 import numpy as np
+from pydub import AudioSegment
 from PIL import Image
 import matplotlib.pyplot as plt
 
@@ -43,13 +47,22 @@ def create_whos_poke(img):
     return who
 
 
+def remove_oggs(path=r"C:\Users\Keese\Documents\GitHub\WhosThisPokemon\sounds\temp"):
+    for file in path:
+        if file.endswith(".ogg") or file.endswith(".wav"):
+            os.remove(os.path.join(path, file))
+
 class Pokemon:
-    def __init__(self, url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", id=9):
+    def __init__(self, url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", audio_path=r"C:\Users\Keese\Documents\GitHub\WhosThisPokemon\sounds", id=9):
         self.id = id
         self.pokemon_json = requests.get(url+str(self.id)).json()
         self.background_path = background_path
+        self.pokemon_audio = Path(audio_path)
         
+        self.name = self.pokemon_json["forms"][0]["name"]
         self.sprite = self.pokemon_json["sprites"]["front_default"]
+        self.weight = self.pokemon_json["weight"]
+        self.type = self.pokemon_json["types"][0]["type"]["name"]
     
     def load_pokemon_image(self):
         image_io = requests.get(self.sprite).content
@@ -112,5 +125,52 @@ class Pokemon:
         anker = (405- int(resized_height/2), int(394-(resized_width/2)))
         who.paste(img, anker)   
         return who     
+    
+    def get_cry_url(self):
+        cry_url = self.pokemon_json["cries"]["legacy"]
+        return cry_url
+    
+    def get_weight(self):
+        return self.weight/10
+    
+    def get_second_type(self):
+        if len(self.pokemon_json["types"]) >1:
+            second_type = self.pokemon_json["types"][1]["type"]["name"]
+        else:
+            second_type = None
+        return second_type          
+    
+    def download_cry(self):
+        temp_audio = self.pokemon_audio / "temp"
+        cry_url = self.get_cry_url()
+        cry_content = requests.get(cry_url)
+        with open(temp_audio / (str(self.id)+".ogg"), "wb") as o:
+            o.write(cry_content.content)
+        return temp_audio / (str(self.id)+".ogg")
+    
+    def cry_wav(self):
+        temp_audio = self.pokemon_audio / "temp"
+        cry_path = self.download_cry()
+        sound = AudioSegment.from_ogg(cry_path)
+        sound.export(temp_audio / (str(self.id) +".wav"), format="wav")
+        return temp_audio / (str(self.id) +".wav")
+    
+    def get_pokechamp(self):
+        temp = requests.get("https://ddragon.leagueoflegends.com/cdn/14.7.1/data/en_US/champion.json").json()
+        champ_name = random.choice(list(temp["data"].keys())) # chose random league champ from all champs
+        league_json = requests.get(f"https://ddragon.leagueoflegends.com/cdn/14.7.1/data/en_US/champion/{str(champ_name)}.json").json()
+        skin = random.choice(league_json["data"][str(champ_name)]["skins"])["num"]
         
+        
+        league_json_img = requests.get(f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{str(champ_name)+'_'+str(skin)}.jpg").content
+        
+        pokemon_json = requests.get(f"https://pokeapi.co/api/v2/pokemon/{str(self.id)}").json()
+        pokemon_json_img = requests.get(pokemon_json["sprites"]["other"]["official-artwork"]["front_default"]).content
+        pokemon_image = Image.open(io.BytesIO(pokemon_json_img)).convert("RGB")
+        
+        champion_image = Image.open(io.BytesIO(league_json_img)).convert("RGB")
+        poke_resized = pokemon_image.resize(champion_image.size, Image.Resampling.NEAREST)
+
+        pokechmap_img = Image.fromarray(np.asarray(poke_resized) + np.asarray(champion_image))
+        return pokechmap_img, (champ_name, self.name)
         
