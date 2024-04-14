@@ -28,19 +28,32 @@ if "pokemon" not in st.session_state:
     st.session_state.pokemon = None
 
 
-
-
 st.title("""
          Who is that Pokemon?
          """)
 
-## two columns layout
+generations = st.selectbox("Which generation should be included?", ("Only OG -- First Gen!", "1st & 2nd", "1st - 3rd", "ALL -- GID GUD"))
+print(generations)
+## three columns layout
 left_column, right_column, outer_right_column = st.columns((3,1,1))
+
+
 
 wild = st.checkbox('Go Wild')
 
 if left_column.button("Next"):
-    poke_id = np.random.randint(0, 1020)
+    
+    if generations == "Only OG -- First Gen!":
+        max_id = 151
+    if generations == "1st & 2nd":
+        max_id = 251
+    if generations == "1st - 3rd":
+        max_id = 386 
+    if generations == "ALL -- GID GUD":
+        max_id = 1020
+    
+    
+    poke_id = np.random.randint(0, max_id)
     st.session_state.pokemon_id = poke_id
     st.session_state.pokemon = Pokemon(url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", id=st.session_state.pokemon_id)
     poke = st.session_state.pokemon  
@@ -64,25 +77,23 @@ if left_column.button("Result"):
     st.session_state.result = True
     st.session_state.image = poke.get_solution()
     
-    left_column.image(st.session_state.image, caption=st.session_state.pokemon_name)
+    if not wild:
+        left_column.image(st.session_state.image, caption=st.session_state.pokemon_name)
+    else:
+        left_column.image(st.session_state.image, caption=st.session_state.pokemon_name+" and "+str(st.session_state.pokechamp_names[0]))
     playsound("sounds\its.wav")
     playsound("sounds\clefairy.wav")
-
+    
+    st.session_state.image = st.empty()
 
 
 if right_column.button("Hint"):
-    #if st.session_state.next & st.session_state.result:
     poke = st.session_state.pokemon
     left_column.image(st.session_state.image, use_column_width=True)
     right_column.write(f"The Pokémon weighs: {poke.get_weight()}kg")
     
-        # poke = Pokemon(url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", id=st.session_state.pokemon_id)
-        # mp3_cry = poke.cry_wav()
-        # playsound(str(mp3_cry))
-        # remove_oggs()
         
 if outer_right_column.button("Hint 2"):
-    #if st.session_state.next & st.session_state.result:
     poke = st.session_state.pokemon
     left_column.image(st.session_state.image, use_column_width=True)
     right_column.write(f"The Pokémon weighs: {poke.get_weight()}kg")
@@ -90,16 +101,3 @@ if outer_right_column.button("Hint 2"):
     outer_right_column.write(f"1st type: {poke.type}")
     outer_right_column.write(f"2nd type: {poke.get_second_type()}")
         
-        # poke = Pokemon(url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", id=st.session_state.pokemon_id)
-        # mp3_cry = poke.cry_wav()
-        # playsound(str(mp3_cry))
-        # remove_oggs()
-        
-    # if st.session_state.next &  st.session_state.result == False:
-    #     poke = st.session_state.pokemon
-    #     left_column.image(st.session_state.next_image, use_column_width=True)
-    #     right_column.write(f"The Pokémon weighs: {poke.get_weight()}kg")
-    #     # poke = Pokemon(url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", id=st.session_state.pokemon_id)
-    #     # mp3_cry = poke.cry_wav()
-    #     # playsound(str(mp3_cry))
-    #     # remove_oggs()

@@ -9,6 +9,7 @@ import numpy as np
 from pydub import AudioSegment
 from PIL import Image
 import matplotlib.pyplot as plt
+from gtts import gTTS 
 
 
 def grab_poke(url="https://pokeapi.co/api/v2/pokemon/" , poke_number=1):
@@ -53,7 +54,7 @@ def remove_oggs(path=r"C:\Users\Keese\Documents\GitHub\WhosThisPokemon\sounds\te
             os.remove(os.path.join(path, file))
 
 class Pokemon:
-    def __init__(self, url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", audio_path=r"C:\Users\Keese\Documents\GitHub\WhosThisPokemon\sounds", id=9):
+    def __init__(self, url="https://pokeapi.co/api/v2/pokemon/", background_path="whos_that_poke.png", audio_path=r"sounds\temp", id=9):
         self.id = id
         self.pokemon_json = requests.get(url+str(self.id)).json()
         self.background_path = background_path
@@ -154,6 +155,14 @@ class Pokemon:
         sound = AudioSegment.from_ogg(cry_path)
         sound.export(temp_audio / (str(self.id) +".wav"), format="wav")
         return temp_audio / (str(self.id) +".wav")
+    
+    def get_pokename_mp3(self):
+        language = 'en'
+        mp3 = gTTS(text=str(self.name).capitalize, lang=language, slow=False)
+        mp3_path = os.path.join(self.pokemon_audio, str(self.name) +".mp3")
+        #mp3.save(mp3_path)
+        mp3.save("sounds/temp/test.mp3")
+        return mp3_path
     
     def get_pokechamp(self):
         temp = requests.get("https://ddragon.leagueoflegends.com/cdn/14.7.1/data/en_US/champion.json").json()
