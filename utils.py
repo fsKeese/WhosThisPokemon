@@ -10,6 +10,7 @@ from pydub import AudioSegment
 from PIL import Image
 import matplotlib.pyplot as plt
 from gtts import gTTS 
+from patchify import patchify, unpatchify
 
 
 def grab_poke(url="https://pokeapi.co/api/v2/pokemon/" , poke_number=1):
@@ -182,4 +183,47 @@ class Pokemon:
 
         pokechmap_img = Image.fromarray(np.asarray(poke_resized) + np.asarray(champion_image))
         return pokechmap_img, (champ_name, self.name)
+    
+    def get_pokechamp_remastered(self):
+        pokemon_json = requests.get(f"https://pokeapi.co/api/v2/pokemon/{str(self.id)}").json()
+        pokemon_json_img = requests.get(pokemon_json["sprites"]["other"]["official-artwork"]["front_default"]).content
+        pokemon_image = Image.open(io.BytesIO(pokemon_json_img)).convert("RGB")
+        
+        temp = requests.get("https://ddragon.leagueoflegends.com/cdn/14.7.1/data/en_US/champion.json").json()
+        champ_name = random.choice(list(temp["data"].keys())) # chose random league champ from all champs
+        league_json = requests.get(f"https://ddragon.leagueoflegends.com/cdn/14.7.1/data/en_US/champion/{str(champ_name)}.json").json()
+        skin = random.choice(league_json["data"][str(champ_name)]["skins"])["num"]
+        
+        
+        league_json_img = requests.get(f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{str(champ_name)+'_'+str(skin)}.jpg").content
+        
+        
+        champion_image = Image.open(io.BytesIO(league_json_img)).convert("RGB")
+        
+        champ_image_resized = champion_image.resize((500,500), Image.Resampling.NEAREST)
+        poke_resized = pokemon_image.resize((500, 500), Image.Resampling.NEAREST)
+
+        patches_poke = patchify(np.asarray(poke_resized), (50,50,3), 50)
+        patches_champ = patchify(np.asarray(champ_image_resized), (50,50,3), 50)
+
+
+        patches = [patches_poke, patches_champ]
+        new_image = np.zeros((500,500,3), np.uint8)
+        for i in range(0,10):
+            i_list = list(l for l in range(0,10))
+            j_list = list(l for l in range(0,10))
+            for j in range(0,10):
+                x = random.choice(i_list)
+                y = random.choice(j_list)
+                p = random.choice(patches)
+                new_image[i*50:(i+1)*50, j*50:(j+1)*50,:] = p[x][y][0]
+                
+                i_list.remove(x)
+                j_list.remove(y)
+        
+        dst = Image.new('RGB', (poke_resized.width + champ_image_resized.width, poke_resized.height))
+        dst.paste(poke_resized, (0, 0))
+        dst.paste(champ_image_resized, (poke_resized.width, 0))
+        
+        return Image.fromarray(new_image), (champ_name, self.name), dst
         

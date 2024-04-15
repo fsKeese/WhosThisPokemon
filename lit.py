@@ -65,7 +65,7 @@ if left_column.button("Next"):
     if not wild:
         st.session_state.image = poke.get_question()
     else:
-        st.session_state.image, st.session_state.pokechamp_names = poke.get_pokechamp()
+        st.session_state.image, st.session_state.pokechamp_names, st.session_state.wild_result = poke.get_pokechamp_remastered()
     # st.session_state.image = poke.get_question()
     left_column.image(st.session_state.image, use_column_width=True)
     playsound("sounds\whoisthat.wav")
@@ -80,7 +80,7 @@ if left_column.button("Result"):
     if not wild:
         left_column.image(st.session_state.image, caption=st.session_state.pokemon_name)
     else:
-        left_column.image(st.session_state.image, caption=st.session_state.pokemon_name+" and "+str(st.session_state.pokechamp_names[0]))
+        left_column.image(st.session_state.wild_result, caption=st.session_state.pokemon_name+" and "+str(st.session_state.pokechamp_names[0]))
     playsound("sounds\its.wav")
     playsound("sounds\clefairy.wav")
     
